@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1098688948575",
+    "project_id": "shweta-computers-academy-a2d54",
+    "storage_bucket": "shweta-computers-academy-a2d54.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098688948575:android:0daf4429053f46ab8eeeea",
+        "android_client_info": {
+          "package_name": "com.SCA"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDj_7yKEXNdOGOX6Og538ld0-5o-YFGjtI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
