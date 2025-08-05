@@ -11,6 +11,7 @@ import {
   FlatList,
 } from 'react-native';
 import { ThemeContext } from './ThemeContext';
+import { useUser } from '../context/UserContext';
 
 const categories = [
   { id: 'coding', label: 'Coding' },
@@ -51,10 +52,24 @@ const cards = [
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const HomeScreen = ({ route, navigation }) => {
-  const personName = route?.params?.usernameOrEmail || 'User';
+  const { userData, user } = useUser();
   const [activeSlide, setActiveSlide] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const { theme } = useContext(ThemeContext);
+
+  // Get the display name from user data, fallback to user email or 'User'
+  const getDisplayName = () => {
+    if (userData?.name) {
+      return userData.name;
+    }
+    if (user?.displayName) {
+      return user.displayName;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0]; // Use part before @ as fallback
+    }
+    return 'User';
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -91,7 +106,7 @@ const HomeScreen = ({ route, navigation }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.welcomeText, { color: theme.text }]}>Welcome {personName}</Text>
+      <Text style={[styles.welcomeText, { color: theme.text }]}>Welcome {getDisplayName()}</Text>
       <View style={{ marginBottom: 20, alignItems: 'center' }}>
         <Animated.Image source={sliderImages[activeSlide]} style={[styles.sliderImg, { opacity: fadeAnim }]} />
       </View>

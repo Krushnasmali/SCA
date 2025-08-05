@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1098688948575:android:0daf4429053f46ab8eeeea",
+        "mobilesdk_app_id": "1:1098688948575:android:304388e763d9782c8eeeea",
         "android_client_info": {
-          "package_name": "com.SCA"
+          "package_name": "com.sca"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1098688948575-7fq8d4culr2ostle8cv7qr06soio4th6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDj_7yKEXNdOGOX6Og538ld0-5o-YFGjtI"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1098688948575-7fq8d4culr2ostle8cv7qr06soio4th6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1098688948575-fafjj69lg32e5l1t78g42qqvknngp8uv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.SCA"
+              }
+            }
+          ]
         }
       }
     }
