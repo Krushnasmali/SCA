@@ -1,4 +1,4 @@
-package com.sca
+package com.sca.app
 
 import android.app.Application
 import com.facebook.react.PackageList

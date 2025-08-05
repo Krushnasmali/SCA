@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>1098688948575-bo5u8ium82g1n9s0rs5tl6phbfcvqobl.apps.googleusercontent.com</string>
+	<string>1098688948575-9hpkub0qkirrgpi14a3emlqc2hsp7mbe.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.1098688948575-bo5u8ium82g1n9s0rs5tl6phbfcvqobl</string>
+	<string>com.googleusercontent.apps.1098688948575-9hpkub0qkirrgpi14a3emlqc2hsp7mbe</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>1098688948575-v5oj180ecpfo538cu39mknc96ie88lg9.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyA960KEfaMnHe4WKJq8cBTaDSQ2sRzLnwo</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.sca</string>
+	<string>com.sca.app</string>
 	<key>PROJECT_ID</key>
 	<string>shweta-computers-academy-a2d54</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +31,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1098688948575:ios:8a325a6621efa0198eeeea</string>
+	<string>1:1098688948575:ios:3f9bca8155107d428eeeea</string>
+	<key>DATABASE_URL</key>
+	<string>https://shweta-computers-academy-a2d54-default-rtdb.firebaseio.com</string>
 </dict>
 </plist>

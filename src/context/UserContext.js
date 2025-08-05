@@ -42,6 +42,12 @@ export const UserProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     const result = await AuthService.signInWithEmailAndPassword(email, password);
+
+    // If login successful, the auth state change will handle user data refresh
+    if (result.success && result.userData) {
+      setUserData(result.userData);
+    }
+
     setLoading(false);
     return result;
   };
@@ -49,6 +55,12 @@ export const UserProvider = ({ children }) => {
   const register = async (email, password, additionalData) => {
     setLoading(true);
     const result = await AuthService.createUserWithEmailAndPassword(email, password, additionalData);
+
+    // After successful registration, set user data
+    if (result.success && result.userData) {
+      setUserData(result.userData);
+    }
+
     setLoading(false);
     return result;
   };
@@ -56,6 +68,12 @@ export const UserProvider = ({ children }) => {
   const loginWithGoogle = async () => {
     setLoading(true);
     const result = await AuthService.signInWithGoogle();
+
+    // If login successful, update user data
+    if (result.success && result.userData) {
+      setUserData(result.userData);
+    }
+
     setLoading(false);
     return result;
   };
@@ -63,6 +81,12 @@ export const UserProvider = ({ children }) => {
   const loginWithApple = async () => {
     setLoading(true);
     const result = await AuthService.signInWithApple();
+
+    // If login successful, update user data
+    if (result.success && result.userData) {
+      setUserData(result.userData);
+    }
+
     setLoading(false);
     return result;
   };

@@ -2,6 +2,7 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
+import { Platform } from 'react-native';
 
 class AuthService {
   constructor() {
@@ -11,6 +12,9 @@ class AuthService {
   configureGoogleSignIn() {
     GoogleSignin.configure({
       webClientId: '1098688948575-7fq8d4culr2ostle8cv7qr06soio4th6.apps.googleusercontent.com',
+      offlineAccess: true,
+      hostedDomain: '',
+      forceCodeForRefreshToken: true,
     });
   }
 
@@ -42,18 +46,21 @@ class AuthService {
       const user = userCredential.user;
       
       // Save additional user data to Firestore
-      await firestore().collection('users').doc(user.uid).set({
+      const newUserData = {
         email: email,
         name: userData.name || '',
         contactNumber: userData.contactNumber || '',
         profilePicture: '',
         createdAt: firestore.FieldValue.serverTimestamp(),
         updatedAt: firestore.FieldValue.serverTimestamp()
-      });
-      
+      };
+
+      await firestore().collection('users').doc(user.uid).set(newUserData);
+
       return {
         success: true,
-        user: user
+        user: user,
+        userData: newUserData
       };
     } catch (error) {
       return {
@@ -66,42 +73,81 @@ class AuthService {
   // Google Sign In
   async signInWithGoogle() {
     try {
+      console.log('Starting Google Sign-In process...');
+
       // Check if your device supports Google Play
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      
+      console.log('Google Play Services available');
+
+      // Sign out any existing user first to ensure clean state
+      await GoogleSignin.signOut();
+
       // Get the users ID token
-      const { idToken } = await GoogleSignin.signIn();
-      
+      const signInResult = await GoogleSignin.signIn();
+      console.log('Google Sign-In successful, got result:', signInResult);
+
+      // Extract idToken from the result
+      const idToken = signInResult.idToken || signInResult.data?.idToken;
+
+      if (!idToken) {
+        console.error('Sign-in result:', JSON.stringify(signInResult, null, 2));
+        throw new Error('No ID token received from Google Sign-In. Please try again.');
+      }
+
       // Create a Google credential with the token
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      
+      console.log('Created Google credential');
+
       // Sign-in the user with the credential
       const userCredential = await auth().signInWithCredential(googleCredential);
       const user = userCredential.user;
-      
+      console.log('Firebase authentication successful for user:', user.uid);
+
       // Check if user exists in Firestore, if not create profile
       const userDoc = await firestore().collection('users').doc(user.uid).get();
-      
+
+      let userData = null;
       if (!userDoc.exists) {
-        await firestore().collection('users').doc(user.uid).set({
+        console.log('Creating new user profile in Firestore');
+        userData = {
           email: user.email,
           name: user.displayName || '',
           contactNumber: '',
           profilePicture: user.photoURL || '',
           createdAt: firestore.FieldValue.serverTimestamp(),
           updatedAt: firestore.FieldValue.serverTimestamp()
-        });
+        };
+        await firestore().collection('users').doc(user.uid).set(userData);
+      } else {
+        userData = userDoc.data();
       }
-      
+
       return {
         success: true,
         user: user,
-        userData: userDoc.exists ? userDoc.data() : null
+        userData: userData
       };
     } catch (error) {
+      console.error('Google Sign-In error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+
+      // Handle specific Google Sign-In errors
+      let errorMessage = 'Google Sign-In failed';
+
+      if (error.code === 'SIGN_IN_CANCELLED') {
+        errorMessage = 'Sign-in was cancelled';
+      } else if (error.code === 'IN_PROGRESS') {
+        errorMessage = 'Sign-in is already in progress';
+      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+        errorMessage = 'Google Play Services is not available';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       return {
         success: false,
-        error: this.getErrorMessage(error.code)
+        error: errorMessage
       };
     }
   }
@@ -109,11 +155,26 @@ class AuthService {
   // Apple Sign In
   async signInWithApple() {
     try {
+      console.log('Starting Apple Sign-In process...');
+
+      // Check if Apple Sign-In is available (only on iOS 13+)
+      if (Platform.OS !== 'ios') {
+        throw new Error('Apple Sign-In is only available on iOS devices');
+      }
+
+      // Check if Apple Sign-In is supported
+      const isSupported = appleAuth.isSupported;
+      if (!isSupported) {
+        throw new Error('Apple Sign-In is not supported on this device (requires iOS 13+)');
+      }
+
       // Start the sign-in request
       const appleAuthRequestResponse = await appleAuth.performRequest({
         requestedOperation: appleAuth.Operation.LOGIN,
         requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
       });
+
+      console.log('Apple Sign-In response received:', appleAuthRequestResponse);
 
       // Ensure Apple returned a user identityToken
       if (!appleAuthRequestResponse.identityToken) {
@@ -123,37 +184,48 @@ class AuthService {
       // Create a Firebase credential from the response
       const { identityToken, nonce } = appleAuthRequestResponse;
       const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
+      console.log('Created Apple credential');
 
       // Sign the user in with the credential
       const userCredential = await auth().signInWithCredential(appleCredential);
       const user = userCredential.user;
-      
+      console.log('Firebase authentication successful for user:', user.uid);
+
       // Check if user exists in Firestore, if not create profile
       const userDoc = await firestore().collection('users').doc(user.uid).get();
-      
+
+      let userData = null;
       if (!userDoc.exists) {
+        console.log('Creating new user profile in Firestore');
         const fullName = appleAuthRequestResponse.fullName;
         const displayName = fullName ? `${fullName.givenName || ''} ${fullName.familyName || ''}`.trim() : '';
 
-        await firestore().collection('users').doc(user.uid).set({
+        userData = {
           email: user.email || appleAuthRequestResponse.email || '',
           name: displayName,
           contactNumber: '',
           profilePicture: '',
           createdAt: firestore.FieldValue.serverTimestamp(),
           updatedAt: firestore.FieldValue.serverTimestamp()
-        });
+        };
+        await firestore().collection('users').doc(user.uid).set(userData);
+      } else {
+        userData = userDoc.data();
       }
-      
+
       return {
         success: true,
         user: user,
-        userData: userDoc.exists ? userDoc.data() : null
+        userData: userData
       };
     } catch (error) {
+      console.error('Apple Sign-In error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+
       return {
         success: false,
-        error: this.getErrorMessage(error.code)
+        error: this.getErrorMessage(error.code) || error.message || 'Apple Sign-In failed'
       };
     }
   }
@@ -263,6 +335,20 @@ class AuthService {
         return 'Too many failed attempts. Please try again later.';
       case 'auth/network-request-failed':
         return 'Network error. Please check your connection.';
+      // Google Sign-In specific errors
+      case 'SIGN_IN_CANCELLED':
+        return 'Sign-in was cancelled.';
+      case 'IN_PROGRESS':
+        return 'Sign-in is already in progress.';
+      case 'PLAY_SERVICES_NOT_AVAILABLE':
+        return 'Google Play Services is not available.';
+      case 'SIGN_IN_REQUIRED':
+        return 'Please sign in to continue.';
+      // Apple Sign-In specific errors
+      case '1001':
+        return 'Apple Sign-In was cancelled.';
+      case '1000':
+        return 'Apple Sign-In failed. Please try again.';
       default:
         return 'An error occurred. Please try again.';
     }

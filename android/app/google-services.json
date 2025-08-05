@@ -1,18 +1,27 @@
 {
   "project_info": {
     "project_number": "1098688948575",
+    "firebase_url": "https://shweta-computers-academy-a2d54-default-rtdb.firebaseio.com",
     "project_id": "shweta-computers-academy-a2d54",
     "storage_bucket": "shweta-computers-academy-a2d54.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1098688948575:android:304388e763d9782c8eeeea",
+        "mobilesdk_app_id": "1:1098688948575:android:6f02da851e4c90b28eeeea",
         "android_client_info": {
-          "package_name": "com.sca"
+          "package_name": "com.sca.app"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "1098688948575-v5oj180ecpfo538cu39mknc96ie88lg9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sca.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
         {
           "client_id": "1098688948575-7fq8d4culr2ostle8cv7qr06soio4th6.apps.googleusercontent.com",
           "client_type": 3
@@ -31,10 +40,10 @@
               "client_type": 3
             },
             {
-              "client_id": "1098688948575-fafjj69lg32e5l1t78g42qqvknngp8uv.apps.googleusercontent.com",
+              "client_id": "1098688948575-9hpkub0qkirrgpi14a3emlqc2hsp7mbe.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.SCA"
+                "bundle_id": "com.sca.app"
               }
             }
           ]

@@ -11,8 +11,10 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  RefreshControl,
+  Linking,
 } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { ThemeContext } from './ThemeContext';
 import { useUser } from '../context/UserContext';
 import storage from '@react-native-firebase/storage';
@@ -30,6 +32,7 @@ const ProfileScreen = () => {
   const [editingContact, setEditingContact] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (userData) {
@@ -38,6 +41,12 @@ const ProfileScreen = () => {
       setPhoto(userData.profilePicture ? { uri: userData.profilePicture } : null);
     }
   }, [userData]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshUserData();
+    setRefreshing(false);
+  };
 
   const uploadImageToFirebase = async (imageUri) => {
     try {
@@ -54,63 +63,135 @@ const ProfileScreen = () => {
     }
   };
 
-  const requestPermission = async () => {
+  const requestPermissions = async () => {
     if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES || PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        {
-          title: 'Permission Required',
-          message: 'This app needs access to your photo library',
-          buttonPositive: 'OK',
+      try {
+        const permissions = [];
+
+        // For Android 13+ (API 33+), use READ_MEDIA_IMAGES
+        if (Platform.Version >= 33) {
+          permissions.push(PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES);
+        } else {
+          permissions.push(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE);
         }
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
+
+        permissions.push(PermissionsAndroid.PERMISSIONS.CAMERA);
+
+        const granted = await PermissionsAndroid.requestMultiple(permissions);
+
+        const cameraGranted = granted[PermissionsAndroid.PERMISSIONS.CAMERA] === PermissionsAndroid.RESULTS.GRANTED;
+        const storageGranted = Platform.Version >= 33
+          ? granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES] === PermissionsAndroid.RESULTS.GRANTED
+          : granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED;
+
+        return { camera: cameraGranted, storage: storageGranted };
+      } catch (err) {
+        console.warn('Permission request error:', err);
+        return { camera: false, storage: false };
+      }
     }
-    return true;
+    return { camera: true, storage: true }; // iOS permissions are handled automatically
   };
 
-  const pickImage = async () => {
-    const hasPermission = await requestPermission();
-    if (!hasPermission) {
-      Alert.alert('Permission denied', 'Cannot access gallery');
+  const showImagePicker = () => {
+    Alert.alert(
+      'Select Image',
+      'Choose an option to select your profile picture',
+      [
+        { text: 'Camera', onPress: () => openCamera() },
+        { text: 'Gallery', onPress: () => openGallery() },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const openCamera = async () => {
+    const permissions = await requestPermissions();
+    if (!permissions.camera) {
+      Alert.alert(
+        'Permission Required',
+        'Camera permission is required to take photos.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
       return;
     }
 
-    launchImageLibrary({
+    const options = {
       mediaType: 'photo',
+      includeBase64: false,
+      maxHeight: 2000,
+      maxWidth: 2000,
       quality: 0.8,
-      maxWidth: 500,
-      maxHeight: 500,
-    }, async (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.errorCode) {
-        Alert.alert('Error', response.errorMessage || 'Something went wrong');
-      } else if (response.assets && response.assets.length > 0) {
-        const imageUri = response.assets[0].uri;
-        setPhoto({ uri: imageUri });
+    };
 
-        // Upload to Firebase Storage
-        setIsUploading(true);
-        try {
-          const downloadURL = await uploadImageToFirebase(imageUri);
+    launchCamera(options, handleImageResponse);
+  };
 
-          // Update user profile with new image URL
-          const result = await updateProfile({ profilePicture: downloadURL });
-          if (result.success) {
-            Alert.alert('Success', 'Profile picture updated successfully!');
-          } else {
-            Alert.alert('Error', 'Failed to update profile picture');
-            setPhoto(userData.profilePicture ? { uri: userData.profilePicture } : null);
-          }
-        } catch (error) {
-          Alert.alert('Error', 'Failed to upload image');
+  const openGallery = async () => {
+    const permissions = await requestPermissions();
+    if (!permissions.storage) {
+      Alert.alert(
+        'Permission Required',
+        'Storage permission is required to access photos.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
+      return;
+    }
+
+    const options = {
+      mediaType: 'photo',
+      includeBase64: false,
+      maxHeight: 2000,
+      maxWidth: 2000,
+      quality: 0.8,
+    };
+
+    launchImageLibrary(options, handleImageResponse);
+  };
+
+  const handleImageResponse = async (response) => {
+    if (response.didCancel) {
+      console.log('User cancelled image picker');
+      return;
+    }
+
+    if (response.errorCode || response.error) {
+      Alert.alert('Error', response.errorMessage || response.error || 'Something went wrong');
+      return;
+    }
+
+    if (response.assets && response.assets.length > 0) {
+      const imageUri = response.assets[0].uri;
+      setPhoto({ uri: imageUri });
+
+      // Upload to Firebase Storage
+      setIsUploading(true);
+      try {
+        const downloadURL = await uploadImageToFirebase(imageUri);
+
+        // Update user profile with new image URL
+        const result = await updateProfile({ profilePicture: downloadURL });
+        if (result.success) {
+          Alert.alert('Success', 'Profile picture updated successfully!');
+        } else {
+          Alert.alert('Error', 'Failed to update profile picture');
           setPhoto(userData.profilePicture ? { uri: userData.profilePicture } : null);
-        } finally {
-          setIsUploading(false);
         }
+      } catch (error) {
+        console.error('Image upload error:', error);
+        Alert.alert('Error', 'Failed to upload image. Please try again.');
+        setPhoto(userData.profilePicture ? { uri: userData.profilePicture } : null);
+      } finally {
+        setIsUploading(false);
       }
-    });
+    }
   };
 
   const handleUpdateName = async () => {
@@ -169,7 +250,17 @@ const ProfileScreen = () => {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[theme.text]}
+          tintColor={theme.text}
+        />
+      }
+    >
       <View style={styles.content}>
         <View style={styles.photoContainer}>
           <Image
@@ -178,7 +269,7 @@ const ProfileScreen = () => {
           />
           <TouchableOpacity
             style={[styles.editButton, { backgroundColor: theme.text }]}
-            onPress={pickImage}
+            onPress={showImagePicker}
             disabled={isUploading}
           >
             {isUploading ? (
@@ -332,12 +423,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 5,
     right: 5,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
