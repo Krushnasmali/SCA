@@ -223,9 +223,24 @@ class AuthService {
       console.error('Error code:', error.code);
       console.error('Error message:', error.message);
 
+      // Handle specific Apple Sign-In errors with user-friendly messages
+      let errorMessage = 'Apple Sign-In failed';
+
+      if (error.message === 'Apple Sign-In is only available on iOS devices') {
+        errorMessage = 'Apple Sign-In is only available on iOS devices. Please use Google Sign-In or email/password instead.';
+      } else if (error.message === 'Apple Sign-In is not supported on this device (requires iOS 13+)') {
+        errorMessage = 'Apple Sign-In requires iOS 13 or later. Please update your device or use another sign-in method.';
+      } else if (error.code === '1001') {
+        errorMessage = 'Apple Sign-In was cancelled.';
+      } else if (error.code === '1000') {
+        errorMessage = 'Apple Sign-In failed. Please try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       return {
         success: false,
-        error: this.getErrorMessage(error.code) || error.message || 'Apple Sign-In failed'
+        error: errorMessage
       };
     }
   }

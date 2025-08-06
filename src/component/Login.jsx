@@ -150,14 +150,16 @@ const Login = ({ navigation }) => {
             <Text style={styles.socialButtonText}>Google</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.socialButton, styles.appleButton]}
-            onPress={handleAppleLogin}
-            disabled={isLoading || loading}
-          >
-            <FontAwesome6 name="apple" size={20} color="#000" />
-            <Text style={styles.socialButtonText}>Apple</Text>
-          </TouchableOpacity>
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity
+              style={[styles.socialButton, styles.appleButton]}
+              onPress={handleAppleLogin}
+              disabled={isLoading || loading}
+            >
+              <FontAwesome6 name="apple" size={20} color="#000" />
+              <Text style={styles.socialButtonText}>Apple</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -291,7 +293,7 @@ const styles = StyleSheet.create({
   },
   socialContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: Platform.OS === 'ios' ? 'space-between' : 'center',
     width: '100%',
     marginTop: 10,
   },
