@@ -23,7 +23,7 @@ export const UserProvider = ({ children }) => {
         setUser(firebaseUser);
         setIsAuthenticated(true);
         
-        // Fetch user data from Firestore
+        // Fetch user data from Realtime Database
         const result = await AuthService.getUserData(firebaseUser.uid);
         if (result.success) {
           setUserData(result.userData);

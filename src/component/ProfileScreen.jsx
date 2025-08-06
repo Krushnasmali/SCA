@@ -84,10 +84,22 @@ const ProfileScreen = () => {
           ? granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES] === PermissionsAndroid.RESULTS.GRANTED
           : granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED;
 
-        return { camera: cameraGranted, storage: storageGranted };
+        const cameraResult = granted[PermissionsAndroid.PERMISSIONS.CAMERA];
+        const storageResult = Platform.Version >= 33
+          ? granted[PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES]
+          : granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE];
+
+        return {
+          camera: cameraGranted,
+          storage: storageGranted,
+          cameraDenied: cameraResult === PermissionsAndroid.RESULTS.DENIED,
+          storageDenied: storageResult === PermissionsAndroid.RESULTS.DENIED,
+          cameraNeverAskAgain: cameraResult === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN,
+          storageNeverAskAgain: storageResult === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN
+        };
       } catch (err) {
         console.warn('Permission request error:', err);
-        return { camera: false, storage: false };
+        return { camera: false, storage: false, cameraDenied: false, storageDenied: false };
       }
     }
     return { camera: true, storage: true }; // iOS permissions are handled automatically
@@ -109,14 +121,25 @@ const ProfileScreen = () => {
   const openCamera = async () => {
     const permissions = await requestPermissions();
     if (!permissions.camera) {
-      Alert.alert(
-        'Permission Required',
-        'Camera permission is required to take photos.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
-        ]
-      );
+      if (permissions.cameraNeverAskAgain) {
+        Alert.alert(
+          'Permission Required',
+          'Camera permission is required to take photos. Please enable it in app settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Permission Required',
+          'Camera permission is required to take photos. Please grant permission and try again.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Try Again', onPress: () => openCamera() },
+          ]
+        );
+      }
       return;
     }
 
@@ -134,14 +157,25 @@ const ProfileScreen = () => {
   const openGallery = async () => {
     const permissions = await requestPermissions();
     if (!permissions.storage) {
-      Alert.alert(
-        'Permission Required',
-        'Storage permission is required to access photos.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
-        ]
-      );
+      if (permissions.storageNeverAskAgain) {
+        Alert.alert(
+          'Permission Required',
+          'Storage permission is required to access photos. Please enable it in app settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Permission Required',
+          'Storage permission is required to access photos. Please grant permission and try again.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Try Again', onPress: () => openGallery() },
+          ]
+        );
+      }
       return;
     }
 

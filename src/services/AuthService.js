@@ -1,5 +1,5 @@
 import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import database from '@react-native-firebase/database';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { Platform } from 'react-native';
@@ -23,14 +23,14 @@ class AuthService {
     try {
       const userCredential = await auth().signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
-      
-      // Get user data from Firestore
-      const userDoc = await firestore().collection('users').doc(user.uid).get();
-      
+
+      // Get user data from Realtime Database
+      const userSnapshot = await database().ref(`users/${user.uid}`).once('value');
+
       return {
         success: true,
         user: user,
-        userData: userDoc.exists ? userDoc.data() : null
+        userData: userSnapshot.exists() ? userSnapshot.val() : null
       };
     } catch (error) {
       return {
@@ -44,18 +44,18 @@ class AuthService {
     try {
       const userCredential = await auth().createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
-      
-      // Save additional user data to Firestore
+
+      // Save additional user data to Realtime Database
       const newUserData = {
         email: email,
         name: userData.name || '',
         contactNumber: userData.contactNumber || '',
         profilePicture: '',
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp()
+        createdAt: database.ServerValue.TIMESTAMP,
+        updatedAt: database.ServerValue.TIMESTAMP
       };
 
-      await firestore().collection('users').doc(user.uid).set(newUserData);
+      await database().ref(`users/${user.uid}`).set(newUserData);
 
       return {
         success: true,
@@ -103,23 +103,23 @@ class AuthService {
       const user = userCredential.user;
       console.log('Firebase authentication successful for user:', user.uid);
 
-      // Check if user exists in Firestore, if not create profile
-      const userDoc = await firestore().collection('users').doc(user.uid).get();
+      // Check if user exists in Realtime Database, if not create profile
+      const userSnapshot = await database().ref(`users/${user.uid}`).once('value');
 
       let userData = null;
-      if (!userDoc.exists) {
-        console.log('Creating new user profile in Firestore');
+      if (!userSnapshot.exists()) {
+        console.log('Creating new user profile in Realtime Database');
         userData = {
           email: user.email,
           name: user.displayName || '',
           contactNumber: '',
           profilePicture: user.photoURL || '',
-          createdAt: firestore.FieldValue.serverTimestamp(),
-          updatedAt: firestore.FieldValue.serverTimestamp()
+          createdAt: database.ServerValue.TIMESTAMP,
+          updatedAt: database.ServerValue.TIMESTAMP
         };
-        await firestore().collection('users').doc(user.uid).set(userData);
+        await database().ref(`users/${user.uid}`).set(userData);
       } else {
-        userData = userDoc.data();
+        userData = userSnapshot.val();
       }
 
       return {
@@ -191,12 +191,12 @@ class AuthService {
       const user = userCredential.user;
       console.log('Firebase authentication successful for user:', user.uid);
 
-      // Check if user exists in Firestore, if not create profile
-      const userDoc = await firestore().collection('users').doc(user.uid).get();
+      // Check if user exists in Realtime Database, if not create profile
+      const userSnapshot = await database().ref(`users/${user.uid}`).once('value');
 
       let userData = null;
-      if (!userDoc.exists) {
-        console.log('Creating new user profile in Firestore');
+      if (!userSnapshot.exists()) {
+        console.log('Creating new user profile in Realtime Database');
         const fullName = appleAuthRequestResponse.fullName;
         const displayName = fullName ? `${fullName.givenName || ''} ${fullName.familyName || ''}`.trim() : '';
 
@@ -205,12 +205,12 @@ class AuthService {
           name: displayName,
           contactNumber: '',
           profilePicture: '',
-          createdAt: firestore.FieldValue.serverTimestamp(),
-          updatedAt: firestore.FieldValue.serverTimestamp()
+          createdAt: database.ServerValue.TIMESTAMP,
+          updatedAt: database.ServerValue.TIMESTAMP
         };
-        await firestore().collection('users').doc(user.uid).set(userData);
+        await database().ref(`users/${user.uid}`).set(userData);
       } else {
-        userData = userDoc.data();
+        userData = userSnapshot.val();
       }
 
       return {
@@ -290,11 +290,11 @@ class AuthService {
   // Update user profile
   async updateUserProfile(userId, userData) {
     try {
-      await firestore().collection('users').doc(userId).update({
+      await database().ref(`users/${userId}`).update({
         ...userData,
-        updatedAt: firestore.FieldValue.serverTimestamp()
+        updatedAt: database.ServerValue.TIMESTAMP
       });
-      
+
       return {
         success: true,
         message: 'Profile updated successfully'
@@ -307,15 +307,15 @@ class AuthService {
     }
   }
 
-  // Get user data from Firestore
+  // Get user data from Realtime Database
   async getUserData(userId) {
     try {
-      const userDoc = await firestore().collection('users').doc(userId).get();
-      
-      if (userDoc.exists) {
+      const userSnapshot = await database().ref(`users/${userId}`).once('value');
+
+      if (userSnapshot.exists()) {
         return {
           success: true,
-          userData: userDoc.data()
+          userData: userSnapshot.val()
         };
       } else {
         return {
