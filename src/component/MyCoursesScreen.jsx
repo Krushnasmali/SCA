@@ -15,100 +15,71 @@ import {
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Feather from 'react-native-vector-icons/Feather';
 import { ThemeContext } from './ThemeContext';
+import { useUser } from '../context/UserContext';
 import CourseService from '../services/CourseService';
-
-
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_WIDTH = (SCREEN_WIDTH - 36) / 2;
 
-const AllCoursesScreen = ({ navigation, route }) => {
+const MyCoursesScreen = ({ navigation }) => {
   const [search, setSearch] = useState('');
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
   const { theme } = useContext(ThemeContext);
+  const { user } = useUser();
 
-  const category = route?.params?.category;
-
-  const categoryLabels = {
-    coding: 'Coding',
-    business: 'Business',
-    designing: 'Designing',
-    digital_literacy: 'Digital Literacy',
-  };
-
-  const headingTitle = category ? `All ${categoryLabels[category]} Courses` : 'All Courses';
-
-  // Load courses from Firebase
+  // Load user's courses from Firebase
   useEffect(() => {
-    loadCourses();
+    if (user) {
+      loadUserCourses();
+      
+      // Set up real-time listener for user courses
+      const unsubscribe = CourseService.onUserCoursesChanged(user.uid, (coursesData) => {
+        setCourses(coursesData);
+        setLoading(false);
+      });
 
-    // Set up real-time listener
-    const unsubscribe = CourseService.onCoursesChanged((coursesData) => {
-      console.log('Courses data received:', coursesData);
-      // Ensure each course has a unique ID and required properties
-      const validCourses = coursesData.filter(course =>
-        course &&
-        course.id &&
-        course.title &&
-        typeof course === 'object'
-      );
-      setCourses(validCourses);
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
+    } else {
       setLoading(false);
-    });
+      setCourses([]);
+    }
+  }, [user]);
 
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, [category, loadCourses]); // Add loadCourses to dependency array
-
-  const loadCourses = React.useCallback(async () => {
+  const loadUserCourses = async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
       setError(null);
-
-      let result;
-      if (category) {
-        result = await CourseService.getCoursesByCategory(category);
-      } else {
-        result = await CourseService.getAllCourses();
-      }
-
+      
+      const result = await CourseService.getUserCourses(user.uid);
+      
       if (result.success) {
-        // Ensure each course has a unique ID and required properties
-        const validCourses = result.courses.filter(course =>
-          course &&
-          course.id &&
-          course.title &&
-          typeof course === 'object'
-        );
-        setCourses(validCourses);
+        setCourses(result.courses);
       } else {
         setError(result.error);
-        Alert.alert('Error', 'Failed to load courses. Please try again.');
+        Alert.alert('Error', 'Failed to load your courses. Please try again.');
       }
     } catch (err) {
       setError(err.message);
-      Alert.alert('Error', 'Failed to load courses. Please try again.');
+      Alert.alert('Error', 'Failed to load your courses. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [category]);
+  };
 
-  // Filtering courses by category and search
+  // Filtering courses by search
   const filteredCourses = courses.filter((course) => {
     // Ensure course object exists and has required properties
     if (!course || typeof course !== 'object') {
       return false;
     }
 
-    if (category) {
-      if (!course.categories || !course.categories.includes(category)) {
-        return false;
-      }
-    }
     if (search) {
       const searchLower = search.toLowerCase();
       const courseTitle = course.title || '';
@@ -153,47 +124,97 @@ const AllCoursesScreen = ({ navigation, route }) => {
     return require('../assets/mscitLogo.png');
   };
 
+  const formatAssignmentDate = (assignmentData) => {
+    if (assignmentData && assignmentData.assignedAt) {
+      return new Date(assignmentData.assignedAt).toLocaleDateString();
+    }
+    return 'N/A';
+  };
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Feather name="book-open" size={64} color={theme.textMuted || '#999'} />
+      <Text style={[styles.emptyTitle, { color: theme.text }]}>No Courses Assigned</Text>
+      <Text style={[styles.emptySubtitle, { color: theme.textMuted || '#666' }]}>
+        You haven't been assigned to any courses yet.
+      </Text>
+      <Text style={[styles.emptySubtitle, { color: theme.textMuted || '#666' }]}>
+        Contact your administrator to get enrolled.
+      </Text>
+      <TouchableOpacity 
+        style={[styles.browseBtn, { backgroundColor: theme.text }]}
+        onPress={() => navigation.navigate('AllCourses')}
+      >
+        <Text style={[styles.browseBtnText, { color: theme.background }]}>
+          Browse All Courses
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (!user) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={[styles.topbar, { backgroundColor: theme.background }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Feather name="arrow-left" size={28} color={theme.text} />
+          </TouchableOpacity>
+          <Text style={[styles.heading, { color: theme.text }]}>My Courses</Text>
+          <View style={{ width: 32 }} />
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Please Log In</Text>
+          <Text style={[styles.emptySubtitle, { color: theme.textMuted || '#666' }]}>
+            You need to be logged in to view your courses.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.topbar, { backgroundColor: theme.background }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Feather name="arrow-left" size={28} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.heading, { color: theme.text }]}>{headingTitle}</Text>
+        <Text style={[styles.heading, { color: theme.text }]}>My Courses</Text>
         <View style={{ width: 32 }} />
       </View>
 
       {/* SEARCH BAR */}
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={handleSearchBarPress}
-        style={[
-          styles.searchBarWrapper,
-          { backgroundColor: theme.background, borderColor: theme.text, borderWidth: 1 },
-        ]}
-      >
-        <View style={styles.searchBarInner}>
-          <FontAwesome name="search" size={20} color="#666" style={{ marginHorizontal: 10 }} />
-          <TextInput
-            ref={inputRef}
-            style={[styles.searchInput, { color: theme.text }]}
-            placeholder="Search courses"
-            placeholderTextColor="#aaa"
-            value={search}
-            onChangeText={setSearch}
-            autoCapitalize="none"
-            returnKeyType="search"
-            clearButtonMode="while-editing"
-            underlineColorAndroid="transparent"
-          />
-        </View>
-      </TouchableOpacity>
+      {courses.length > 0 && (
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handleSearchBarPress}
+          style={[
+            styles.searchBarWrapper,
+            { backgroundColor: theme.background, borderColor: theme.text, borderWidth: 1 },
+          ]}
+        >
+          <View style={styles.searchBarInner}>
+            <FontAwesome name="search" size={20} color="#666" style={{ marginHorizontal: 10 }} />
+            <TextInput
+              ref={inputRef}
+              style={[styles.searchInput, { color: theme.text }]}
+              placeholder="Search your courses"
+              placeholderTextColor="#aaa"
+              value={search}
+              onChangeText={setSearch}
+              autoCapitalize="none"
+              returnKeyType="search"
+              clearButtonMode="while-editing"
+              underlineColorAndroid="transparent"
+            />
+          </View>
+        </TouchableOpacity>
+      )}
 
       {/* LOADING INDICATOR */}
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.text} />
-          <Text style={[styles.loadingText, { color: theme.text }]}>Loading courses...</Text>
+          <Text style={[styles.loadingText, { color: theme.text }]}>Loading your courses...</Text>
         </View>
       )}
 
@@ -201,9 +222,9 @@ const AllCoursesScreen = ({ navigation, route }) => {
       {error && !loading && (
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: 'red' }]}>Error: {error}</Text>
-          <TouchableOpacity
+          <TouchableOpacity 
             style={[styles.retryBtn, { backgroundColor: theme.text }]}
-            onPress={loadCourses}
+            onPress={loadUserCourses}
           >
             <Text style={[styles.retryText, { color: theme.background }]}>Retry</Text>
           </TouchableOpacity>
@@ -219,9 +240,7 @@ const AllCoursesScreen = ({ navigation, route }) => {
           numColumns={2}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={
-            <Text style={[styles.noResults, { color: theme.text }]}>No courses found.</Text>
-          }
+          ListEmptyComponent={renderEmptyState}
           renderItem={({ item }) => (
             <View
               style={[
@@ -233,6 +252,11 @@ const AllCoursesScreen = ({ navigation, route }) => {
               <Text style={[styles.title, { color: theme.text }]}>{item.title}</Text>
               <Text style={[styles.detail, { color: theme.text }]}>Duration: {item.duration}</Text>
               <Text style={[styles.detail, { color: theme.text }]}>Fees: {item.fees}</Text>
+              {item.assignmentData && (
+                <Text style={[styles.assignedDate, { color: theme.textMuted || '#666' }]}>
+                  Assigned: {formatAssignmentDate(item.assignmentData)}
+                </Text>
+              )}
               <TouchableOpacity
                 style={[styles.btn, { backgroundColor: theme.text }]}
                 onPress={() => navigation.navigate('CourseDetails', { course: item })}
@@ -305,22 +329,55 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   title: {
+    fontSize: 16,
     fontWeight: 'bold',
-    fontSize: 15,
-    marginBottom: 2,
     textAlign: 'center',
+    marginBottom: 4,
   },
-  detail: { fontSize: 13 },
+  detail: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  assignedDate: {
+    fontSize: 10,
+    textAlign: 'center',
+    marginBottom: 8,
+    fontStyle: 'italic',
+  },
   btn: {
-    marginTop: 10,
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 18,
   },
-  noResults: {
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
     textAlign: 'center',
-    marginTop: 24,
+  },
+  emptySubtitle: {
     fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 10,
+    lineHeight: 22,
+  },
+  browseBtn: {
+    marginTop: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  browseBtnText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   loadingContainer: {
     flex: 1,
@@ -355,4 +412,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AllCoursesScreen;
+export default MyCoursesScreen;

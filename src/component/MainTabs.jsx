@@ -91,8 +91,8 @@ const styles = StyleSheet.create({
   tabBarStyle: {
     position: 'absolute',
     bottom: 20,
-    left: '5%',
-    right: '5%',
+    marginHorizontal: '5%',
+    alignSelf: 'center',
     width: '90%',
     elevation: 5,
     borderRadius: 30,

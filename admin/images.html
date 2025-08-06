@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCA Image Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .image-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+        .image-card:hover {
+            transform: translateY(-2px);
+        }
+        .image-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .image-info {
+            padding: 15px;
+        }
+        .image-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .url-container {
+            display: flex;
+            gap: 8px;
+        }
+        .url-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            background-color: #f9f9f9;
+        }
+        .copy-btn {
+            background-color: #8000ff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .copy-btn:hover {
+            background-color: #6600cc;
+        }
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SCA Image Gallery</h1>
+        <div id="imagesGrid" class="images-grid">
+            <!-- Images will be populated here -->
+        </div>
+    </div>
+    
+    <div id="successMessage" class="success-message">
+        URL copied to clipboard!
+    </div>
+
+    <script>
+        // Base URL for images
+        const BASE_URL = 'https://admin-sca.netlify.app/images/';
+        
+        // Complete list of images from admin/images folder
+        const images = [
+            'AdvancedExcel.jpg',
+            'advjava.png',
+            'advpython.png',
+            'allCourses2.jpg',
+            'apple.png',
+            'autocad.png',
+            'c.png',
+            'certificates.png',
+            'coding.jpg',
+            'cpp.png',
+            'google.png',
+            'home.png',
+            'java.png',
+            'mscitImg.jpg',
+            'mscitLogo.png',
+            'myCourses.png',
+            'nonScaCourses.png',
+            'profile.png',
+            'python.jpg',
+            'reactNative.png',
+            'scalogo.jpg',
+            'setting.png',
+            'splashscreen.jpg',
+            'Tally.png',
+            'webdev.jpg',
+            'webdevelopment.png'
+        ];
+
+        // Render images grid
+        function renderImages() {
+            const imagesGrid = document.getElementById('imagesGrid');
+            
+            imagesGrid.innerHTML = images.map(imageName => {
+                const fullUrl = BASE_URL + imageName;
+                
+                return `
+                    <div class="image-card">
+                        <img src="${fullUrl}" 
+                             alt="${imageName}"
+                             onerror="this.style.opacity='0.5'; this.alt='Image not found';">
+                        <div class="image-info">
+                            <div class="image-name">${imageName}</div>
+                            <div class="url-container">
+                                <input type="text" value="${fullUrl}" readonly class="url-input">
+                                <button onclick="copyToClipboard('${fullUrl}')" class="copy-btn">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Copy to clipboard function
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccessMessage();
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showSuccessMessage();
+            });
+        }
+
+        // Show success message
+        function showSuccessMessage() {
+            const message = document.getElementById('successMessage');
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 2000);
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            renderImages();
+        });
+    </script>
+</body>
+</html>

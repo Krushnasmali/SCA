@@ -9,6 +9,7 @@ import RegisterScreen from '../component/RegisterScreen';
 import ForgotPasswordScreen from '../component/ForgotPasswordScreen';
 import MainTabs from '../component/MainTabs';
 import AllCoursesScreen from '../component/AllCoursesScreen';
+import MyCoursesScreen from '../component/MyCoursesScreen';
 import CourseDetailsScreen from '../component/CourseDetailsScreen';
 import ProfileScreen from '../component/ProfileScreen';
 
@@ -32,6 +33,7 @@ const AuthNavigator = () => {
         <>
           <Stack.Screen name="MainTabs" component={MainTabs} />
           <Stack.Screen name="AllCourses" component={AllCoursesScreen} />
+          <Stack.Screen name="MyCourses" component={MyCoursesScreen} />
           <Stack.Screen name="CourseDetails" component={CourseDetailsScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
         </>
