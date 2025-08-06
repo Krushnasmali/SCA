@@ -1,57 +1,130 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import React, { useContext } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { ThemeContext } from '../component/ThemeContext';
 
 const SettingsScreen = ({ navigation }) => {
-    const [isEnabled1, setIsEnabled1] = React.useState(true);
-    const toggleSwitch1 = () => setIsEnabled1(previousState => !previousState);
-    
-    const [isEnabled2, setIsEnabled2] = React.useState(false);
-    const toggleSwitch2 = () => setIsEnabled2(previousState => !previousState);
+    const { theme, toggleTheme, isDark } = useContext(ThemeContext);
+    const settingsOptions = [
+        {
+            id: 'theme',
+            title: 'Theme',
+            subtitle: isDark ? 'Dark mode enabled' : 'Light mode enabled',
+            icon: isDark ? 'moon' : 'sunny-outline',
+            iconColor: theme.primary,
+            hasSwitch: true,
+            switchValue: isDark,
+            switchAction: toggleTheme,
+        },
+        {
+            id: 'privacy',
+            title: 'Privacy Policy',
+            subtitle: 'Read our privacy terms',
+            icon: 'document-text-outline',
+            iconColor: theme.primary,
+            action: () => {},
+            showArrow: true,
+        },
+        {
+            id: 'help',
+            title: 'Help & Support',
+            subtitle: 'Get help and contact support',
+            icon: 'help-circle-outline',
+            iconColor: theme.primary,
+            action: () => {},
+            showArrow: true,
+        },
+        {
+            id: 'logout',
+            title: 'Logout',
+            subtitle: 'Sign out of your account',
+            icon: 'log-out-outline',
+            iconColor: theme.error,
+            action: () => navigation.navigate('LogoutScreen'),
+            showArrow: true,
+            isDestructive: true,
+        },
+    ];
+
+    const renderSettingItem = (item) => {
+        const ItemComponent = item.hasSwitch ? View : TouchableOpacity;
+
+        return (
+            <ItemComponent
+                key={item.id}
+                style={[
+                    styles.settingCard,
+                    {
+                        backgroundColor: theme.cardBackground,
+                        borderColor: theme.cardBorder,
+                        shadowColor: theme.cardShadow,
+                    },
+                ]}
+                onPress={item.action}
+                activeOpacity={item.hasSwitch ? 1 : 0.7}
+            >
+                <View style={styles.settingContent}>
+                    <View style={[styles.iconContainer, { backgroundColor: `${item.iconColor}15` }]}>
+                        <Icon name={item.icon} size={24} color={item.iconColor} />
+                    </View>
+
+                    <View style={styles.textContainer}>
+                        <Text style={[
+                            styles.settingTitle,
+                            { color: item.isDestructive ? theme.error : theme.text }
+                        ]}>
+                            {item.title}
+                        </Text>
+                        <Text style={[styles.settingSubtitle, { color: theme.textSecondary }]}>
+                            {item.subtitle}
+                        </Text>
+                    </View>
+
+                    <View style={styles.actionContainer}>
+                        {item.hasSwitch ? (
+                            <Switch
+                                value={item.switchValue}
+                                onValueChange={item.switchAction}
+                                thumbColor={item.switchValue ? theme.switchThumb : theme.textMuted}
+                                trackColor={{
+                                    false: theme.switchTrack,
+                                    true: theme.switchTrackActive,
+                                }}
+                                ios_backgroundColor={theme.switchTrack}
+                            />
+                        ) : item.showArrow ? (
+                            <Icon
+                                name="chevron-forward"
+                                size={20}
+                                color={theme.textMuted}
+                            />
+                        ) : null}
+                    </View>
+                </View>
+            </ItemComponent>
+        );
+    };
+
     return (
-        <View style={styles.container}>
-            
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={styles.header}>
+                    <Text style={[styles.headerTitle, { color: theme.text }]}>
+                        Settings
+                    </Text>
+                    <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
+                        Manage your app preferences
+                    </Text>
+                </View>
 
-            {/* Settings Options */}
-            <TouchableOpacity style={styles.option}>
-                <Icon name="person-outline" size={22} color="#438596" style={styles.icon} />
-                <Text style={styles.optionText}>Account</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Edit Account')}>
-                    <Icon name="create-outline" size={24} color="#333" />
-                </TouchableOpacity>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.option}>
-                <Icon name="notifications-outline" size={22} color="#438596" style={styles.icon} />
-                <Text style={styles.optionText}>Notifications </Text>
-                <Switch value={isEnabled1} onValueChange={toggleSwitch1} />
-            </TouchableOpacity>
-
-            <View style={styles.option}>
-                <Icon name="moon-outline" size={22} color="#438596" style={styles.icon} />
-                <Text style={styles.optionText}>Dark Mode</Text>
-                <Switch value={isEnabled2} onValueChange={toggleSwitch2} />
-            </View>
-
-            <TouchableOpacity style={styles.option}>
-                <Icon name="document-text-outline" size={22} color="#438596" style={styles.icon} />
-                <Text style={styles.optionText}>Privacy Policy</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.option}>
-                <Icon name="help-circle-outline" size={22} color="#438596" style={styles.icon} />
-                <Text style={styles.optionText}>Help & Support</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.option} onPress={() => navigation.navigate('LogoutScreen')}>
-                <Icon name="log-out-outline" size={22} color="red" style={styles.icon} />
-                <Text style={[styles.optionText, { color: 'red' }]}>Logout</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.option} onPress={() => navigation.navigate('Delete Account')}>
-                <Icon name="trash-outline" size={22} color="red" style={styles.icon}  />
-                <Text style={[styles.optionText, { color: 'red' }]}>Delete Account</Text>
-            </TouchableOpacity>
+                <View style={styles.settingsContainer}>
+                    {settingsOptions.map(renderSettingItem)}
+                </View>
+            </ScrollView>
         </View>
     );
 };
@@ -61,35 +134,76 @@ export default SettingsScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
-        padding: 16,
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingBottom: 100, // Account for tab bar
     },
     header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 20,
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 24,
     },
     headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#333',
-        marginTop:25,
+        fontSize: 32,
+        fontWeight: '700',
+        marginBottom: 4,
+        letterSpacing: -0.5,
     },
-    option: {
+    headerSubtitle: {
+        fontSize: 16,
+        fontWeight: '400',
+        lineHeight: 22,
+    },
+    settingsContainer: {
+        paddingHorizontal: 16,
+        gap: 12,
+    },
+    settingCard: {
+        borderRadius: 16,
+        borderWidth: 1,
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+        marginBottom: 4,
+    },
+    settingContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 14,
-        borderBottomWidth: 1,
-        borderColor: '#eee',
+        padding: 16,
     },
-    optionText: {
-        fontSize: 16,
-        marginLeft: 12,
+    iconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    textContainer: {
         flex: 1,
-        color: '#333',
+        marginRight: 12,
     },
-    icon: {
-        width: 28,
+    settingTitle: {
+        fontSize: 17,
+        fontWeight: '600',
+        marginBottom: 2,
+        lineHeight: 22,
+    },
+    settingSubtitle: {
+        fontSize: 14,
+        fontWeight: '400',
+        lineHeight: 18,
+    },
+    actionContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        minWidth: 24,
     },
 });

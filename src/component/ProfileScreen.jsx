@@ -268,7 +268,13 @@ const ProfileScreen = () => {
             style={styles.photo}
           />
           <TouchableOpacity
-            style={[styles.editButton, { backgroundColor: theme.text }]}
+            style={[
+              styles.editButton,
+              {
+                backgroundColor: theme.primary,
+                borderColor: theme.cardBackground,
+              }
+            ]}
             onPress={showImagePicker}
             disabled={isUploading}
           >
@@ -286,12 +292,19 @@ const ProfileScreen = () => {
             {editingName ? (
               <View style={styles.editContainer}>
                 <TextInput
-                  style={[styles.editInput, { color: theme.text, borderColor: theme.text }]}
+                  style={[
+                    styles.editInput,
+                    {
+                      color: theme.text,
+                      borderColor: theme.border,
+                      backgroundColor: theme.cardBackground
+                    }
+                  ]}
                   value={name}
                   onChangeText={setName}
                   autoFocus
                   placeholder="Enter your name"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={theme.textMuted}
                 />
                 <View style={styles.editButtons}>
                   <TouchableOpacity
@@ -314,13 +327,19 @@ const ProfileScreen = () => {
               </View>
             ) : (
               <TouchableOpacity
-                style={styles.valueContainer}
+                style={[
+                  styles.valueContainer,
+                  {
+                    backgroundColor: theme.cardBackground,
+                    borderColor: theme.border,
+                  }
+                ]}
                 onPress={() => setEditingName(true)}
               >
                 <Text style={[styles.infoValue, { color: theme.text }]}>
                   {name || 'Tap to add name'}
                 </Text>
-                <FontAwesome6 name="edit" size={16} color="#666" />
+                <FontAwesome6 name="edit" size={16} color={theme.textMuted} />
               </TouchableOpacity>
             )}
           </View>
@@ -339,12 +358,19 @@ const ProfileScreen = () => {
             {editingContact ? (
               <View style={styles.editContainer}>
                 <TextInput
-                  style={[styles.editInput, { color: theme.text, borderColor: theme.text }]}
+                  style={[
+                    styles.editInput,
+                    {
+                      color: theme.text,
+                      borderColor: theme.border,
+                      backgroundColor: theme.cardBackground
+                    }
+                  ]}
                   value={contactNumber}
                   onChangeText={setContactNumber}
                   autoFocus
                   placeholder="Enter contact number"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={theme.textMuted}
                   keyboardType="phone-pad"
                 />
                 <View style={styles.editButtons}>
@@ -368,13 +394,19 @@ const ProfileScreen = () => {
               </View>
             ) : (
               <TouchableOpacity
-                style={styles.valueContainer}
+                style={[
+                  styles.valueContainer,
+                  {
+                    backgroundColor: theme.cardBackground,
+                    borderColor: theme.border,
+                  }
+                ]}
                 onPress={() => setEditingContact(true)}
               >
                 <Text style={[styles.infoValue, { color: theme.text }]}>
                   {contactNumber || 'Tap to add contact number'}
                 </Text>
-                <FontAwesome6 name="edit" size={16} color="#666" />
+                <FontAwesome6 name="edit" size={16} color={theme.textMuted} />
               </TouchableOpacity>
             )}
           </View>
@@ -421,7 +453,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     position: 'absolute',
-    bottom: 5,
+    top: 5,
     right: 5,
     width: 40,
     height: 40,
@@ -429,7 +461,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -458,12 +489,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e9ecef',
   },
   editContainer: {
     marginTop: 5,
@@ -471,11 +500,10 @@ const styles = StyleSheet.create({
   editInput: {
     fontSize: 16,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    marginBottom: 10,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 12,
   },
   editButtons: {
     flexDirection: 'row',

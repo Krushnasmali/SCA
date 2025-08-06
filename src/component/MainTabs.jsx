@@ -1,27 +1,49 @@
-import React from 'react';
-import { Dimensions, StyleSheet } from 'react-native';
+import React, { useContext } from 'react';
+import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from './HomeScreen';
 import ProfileScreen from './ProfileScreen';
 import SettingsScreen from './SettingsScreen';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import { ThemeContext } from './ThemeContext';
 
 const Tab = createBottomTabNavigator();
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function MainTabs({ route }) {
+  const { theme } = useContext(ThemeContext);
+
   return (
     <Tab.Navigator
       screenOptions={({ route: tabRoute }) => ({
         headerShown: true,
-        headerStyle: styles.headerStyle,
-        headerTitleStyle: {
-          fontSize: 27,
-          fontWeight: 'bold',
+        headerStyle: {
+          backgroundColor: theme.headerBackground,
+          elevation: 4,
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
         },
-        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontSize: 22,
+          fontWeight: '700',
+          letterSpacing: -0.3,
+        },
+        headerTintColor: theme.headerText,
         tabBarShowLabel: true,
-        tabBarStyle: styles.tabBarStyle,
+        tabBarStyle: [
+          styles.tabBarStyle,
+          {
+            backgroundColor: theme.tabBarBackground,
+            borderTopColor: theme.tabBarBorder,
+            shadowColor: theme.cardShadow,
+          },
+        ],
+
+        tabBarActiveTintColor: theme.tabBarActive,
+        tabBarInactiveTintColor: theme.tabBarInactive,
         tabBarIcon: ({ focused }) => {
           let iconName = 'home';
           if (tabRoute.name === 'Settings') iconName = 'setting';
@@ -30,7 +52,7 @@ export default function MainTabs({ route }) {
             <AntDesign
               name={iconName}
               size={24}
-              color={focused ? '#800080' : 'gray'}
+              color={focused ? theme.tabBarActive : theme.tabBarInactive}
             />
           );
         },
@@ -66,22 +88,21 @@ export default function MainTabs({ route }) {
 }
 
 const styles = StyleSheet.create({
-  headerStyle: {
-    backgroundColor: '#960896ff',
-  },
   tabBarStyle: {
     position: 'absolute',
     bottom: 20,
-    width: SCREEN_WIDTH * 0.9,
-    left: SCREEN_WIDTH * 0.05,
+    left: '5%',
+    right: '5%',
+    width: '90%',
     elevation: 5,
     borderRadius: 30,
     height: 60,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: {
+      width: 0,
+      height: 10
+    },
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    backgroundColor: '#fff',
-    marginLeft: '5%',
   },
 });

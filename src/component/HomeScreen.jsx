@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
-  FlatList,
 } from 'react-native';
 import { ThemeContext } from './ThemeContext';
 import { useUser } from '../context/UserContext';
@@ -105,67 +104,131 @@ const HomeScreen = ({ route, navigation }) => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.welcomeText, { color: theme.text }]}>Welcome {getDisplayName()}</Text>
-      <View style={{ marginBottom: 20, alignItems: 'center' }}>
-        <Animated.Image source={sliderImages[activeSlide]} style={[styles.sliderImg, { opacity: fadeAnim }]} />
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
+      {/* Header Section */}
+      <View style={styles.headerSection}>
+        <Text style={[styles.welcomeText, { color: theme.text }]}>
+          Welcome back,
+        </Text>
+        <Text style={[styles.nameText, { color: theme.primary }]}>
+          {getDisplayName()}
+        </Text>
       </View>
 
-      <Text style={{ color: 'purple', fontSize: 27, textAlign: 'center' }}> ★ Category ★ </Text>
+      {/* Hero Image Slider */}
+      <View style={{ marginBottom: 20, alignItems: 'center' }}>
+        <Animated.Image
+          source={sliderImages[activeSlide]}
+          style={[styles.sliderImg, { opacity: fadeAnim }]}
+        />
+      </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryRow}>
-        {categories.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[
-              styles.categoryTab,
-              {
-                backgroundColor: theme.background,
-                borderColor: theme.text,
-                borderWidth: 1,
-              },
-            ]}
-            onPress={() => handleCategoryPress(cat.id)}
-          >
-            <Text style={[styles.categoryText, { color: theme.text }]}>{cat.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {/* Categories Section */}
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Categories
+          </Text>
+          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+            Explore our courses
+          </Text>
+        </View>
 
-      <FlatList
-        data={cards}
-        numColumns={2}
-        keyExtractor={(item) => item.name}
-        contentContainerStyle={styles.cardsContainer}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.card,
-              {
-                backgroundColor: theme.background,
-                borderColor: theme.text,
-                borderWidth: 1,
-              },
-            ]}
-            onPress={() => handleCardPress(item)}
-          >
-            <Image source={item.img} style={styles.cardImg} />
-            <Text style={[styles.cardText, { color: theme.text }]}>{item.name}</Text>
-          </TouchableOpacity>
-        )}
-        showsVerticalScrollIndicator={false}
-      />
-    </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryRow}
+          contentContainerStyle={styles.categoryRowContent}
+        >
+          {categories.map((cat) => (
+            <TouchableOpacity
+              key={cat.id}
+              style={[
+                styles.categoryTab,
+                {
+                  backgroundColor: theme.cardBackground,
+                  borderColor: theme.cardBorder,
+                  shadowColor: theme.cardShadow,
+                },
+              ]}
+              onPress={() => handleCategoryPress(cat.id)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.categoryText, { color: theme.text }]}>
+                {cat.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Quick Access Cards */}
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Quick Access
+          </Text>
+          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+            Jump to your favorite sections
+          </Text>
+        </View>
+
+        <View style={styles.cardsGrid}>
+          {cards.map((item) => (
+            <TouchableOpacity
+              key={item.name}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: theme.cardBackground,
+                  borderColor: theme.cardBorder,
+                  shadowColor: theme.cardShadow,
+                },
+              ]}
+              onPress={() => handleCardPress(item)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.cardImageContainer}>
+                <Image source={item.img} style={styles.cardImg} />
+              </View>
+              <View style={styles.cardContent}>
+                <Text style={[styles.cardText, { color: theme.text }]}>
+                  {item.name}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 12 },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 8,
+    paddingBottom: 100, // Account for tab bar
+  },
+  headerSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
   welcomeText: {
-    fontSize: 22,
+    fontSize: 18,
+    fontWeight: '400',
+    marginBottom: 2,
+  },
+  nameText: {
+    fontSize: 28,
     fontWeight: '700',
-    paddingLeft: 16,
-    paddingBottom: 4,
+    letterSpacing: -0.5,
   },
   sliderImg: {
     width: SCREEN_WIDTH * 0.9,
@@ -175,48 +238,90 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     resizeMode: 'cover',
   },
+  sectionContainer: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 2,
+    letterSpacing: -0.3,
+  },
+  sectionSubtitle: {
+    fontSize: 15,
+    fontWeight: '400',
+  },
   categoryRow: {
-    margin: 5,
-    marginHorizontal: 12,
-    flexGrow: 0,
-    padding: 4,
+    paddingLeft: 20,
+  },
+  categoryRowContent: {
+    paddingRight: 20,
+    gap: 12,
   },
   categoryTab: {
-    borderRadius: 10,
-    height: 34,
-    minWidth: 100,
-    marginBottom: 10,
-    marginRight: 10,
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderWidth: 1,
     elevation: 2,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 10,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   categoryText: {
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 15,
     textAlign: 'center',
-    lineHeight: 20,
   },
-  cardsContainer: {
-    paddingHorizontal: 12,
-    paddingBottom: 12,
+  cardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    justifyContent: 'space-between',
   },
   card: {
     width: (SCREEN_WIDTH - 48) / 2,
-    height: 180,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 6,
-    marginBottom: 16,
-    marginRight: 12,
-    marginTop: 20,
+    borderRadius: 20,
     borderWidth: 1,
+    elevation: 4,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
   },
-  cardImg: { width: '160%', height: 120, marginBottom: 10, resizeMode: 'contain' },
-  cardText: { fontSize: 15, fontWeight: '600', textAlign: 'center' },
+  cardImageContainer: {
+    height: 120,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  cardImg: {
+    width: '90%',
+    height: '90%',
+    resizeMode: 'contain',
+  },
+  cardContent: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  cardText: {
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
 });
 
 export default HomeScreen;
