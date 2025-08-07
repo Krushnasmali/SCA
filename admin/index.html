@@ -46,7 +46,7 @@
             </div>
 
             <!-- Admin Tools Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
                 <!-- Course Management -->
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                     <div class="p-6">
@@ -81,6 +81,22 @@
                     </div>
                 </div>
 
+                <!-- Notification Management -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                    <div class="p-6">
+                        <div class="flex items-center justify-center w-16 h-16 bg-accent rounded-lg mb-4 mx-auto">
+                            <i class="fas fa-bell text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 text-center mb-2">Notification Management</h3>
+                        <p class="text-gray-600 text-center mb-6">Send push notifications to users and view history</p>
+                        <div class="text-center">
+                            <a href="notification-management.html"
+                               class="inline-block bg-accent hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                                <i class="fas fa-paper-plane mr-2"></i>Manage Notifications
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
             </div>
 
@@ -92,6 +108,7 @@
                         <h4 class="font-semibold text-gray-700 mb-2">Features</h4>
                         <ul class="text-gray-600 space-y-1">
                             <li><i class="fas fa-check text-green-500 mr-2"></i>Real-time data synchronization</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Push notification system</li>
                             <li><i class="fas fa-check text-green-500 mr-2"></i>Responsive design</li>
                             <li><i class="fas fa-check text-green-500 mr-2"></i>Firebase Realtime Database</li>
                             <li><i class="fas fa-check text-green-500 mr-2"></i>Modern UI with Tailwind CSS</li>
@@ -102,8 +119,9 @@
                         <ol class="text-gray-600 space-y-1">
                             <li><span class="font-medium">1.</span> Use Course Management to add/edit courses</li>
                             <li><span class="font-medium">2.</span> Use User Management to assign courses</li>
-                            <li><span class="font-medium">3.</span> Changes sync automatically to mobile app</li>
-                            <li><span class="font-medium">4.</span> Monitor real-time updates in mobile app</li>
+                            <li><span class="font-medium">3.</span> Use Notification Management to send updates</li>
+                            <li><span class="font-medium">4.</span> Changes sync automatically to mobile app</li>
+                            <li><span class="font-medium">5.</span> Monitor real-time updates in mobile app</li>
                         </ol>
                     </div>
                 </div>
@@ -118,6 +136,7 @@
                         <ul class="text-blue-800 space-y-1">
                             <li>• All changes made through these admin interfaces will automatically sync to the mobile app</li>
                             <li>• Course assignments will appear in users' "My Courses" section in the mobile app</li>
+                            <li>• Push notifications will be sent to users' devices when enabled</li>
                             <li>• The admin interfaces use Firebase Realtime Database for real-time synchronization</li>
                             <li>• Changes are reflected immediately without requiring app restart</li>
                         </ul>

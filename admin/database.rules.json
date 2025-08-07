@@ -1,0 +1,26 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid || auth.token.admin === true",
+        ".write": "$uid === auth.uid || auth.token.admin === true"
+      }
+    },
+    "courses": {
+      ".read": "auth != null",
+      ".write": "auth.token.admin === true"
+    },
+    "userCourses": {
+      "$uid": {
+        ".read": "$uid === auth.uid || auth.token.admin === true",
+        ".write": "auth.token.admin === true"
+      }
+    },
+    "notifications": {
+      ".read": "auth.token.admin === true",
+      ".write": "auth.token.admin === true"
+    }
+  }
+}

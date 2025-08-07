@@ -51,6 +51,13 @@ class AuthService {
         name: userData.name || '',
         contactNumber: userData.contactNumber || '',
         profilePicture: '',
+        fcmToken: '',
+        notificationSettings: {
+          enabled: true,
+          courseUpdates: true,
+          generalAnnouncements: true,
+          lastUpdated: database.ServerValue.TIMESTAMP
+        },
         createdAt: database.ServerValue.TIMESTAMP,
         updatedAt: database.ServerValue.TIMESTAMP
       };
@@ -114,6 +121,13 @@ class AuthService {
           name: user.displayName || '',
           contactNumber: '',
           profilePicture: user.photoURL || '',
+          fcmToken: '',
+          notificationSettings: {
+            enabled: true,
+            courseUpdates: true,
+            generalAnnouncements: true,
+            lastUpdated: database.ServerValue.TIMESTAMP
+          },
           createdAt: database.ServerValue.TIMESTAMP,
           updatedAt: database.ServerValue.TIMESTAMP
         };
@@ -205,6 +219,13 @@ class AuthService {
           name: displayName,
           contactNumber: '',
           profilePicture: '',
+          fcmToken: '',
+          notificationSettings: {
+            enabled: true,
+            courseUpdates: true,
+            generalAnnouncements: true,
+            lastUpdated: database.ServerValue.TIMESTAMP
+          },
           createdAt: database.ServerValue.TIMESTAMP,
           updatedAt: database.ServerValue.TIMESTAMP
         };

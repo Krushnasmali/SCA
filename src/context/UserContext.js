@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AuthService from '../services/AuthService';
+import notificationService from '../services/NotificationService';
 
 const UserContext = createContext();
 
@@ -22,16 +23,26 @@ export const UserProvider = ({ children }) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         setIsAuthenticated(true);
-        
+
         // Fetch user data from Realtime Database
         const result = await AuthService.getUserData(firebaseUser.uid);
         if (result.success) {
           setUserData(result.userData);
         }
+
+        // Initialize notification service for authenticated user
+        try {
+          await notificationService.initialize(firebaseUser);
+        } catch (error) {
+          console.error('Error initializing notification service:', error);
+        }
       } else {
         setUser(null);
         setUserData(null);
         setIsAuthenticated(false);
+
+        // Cleanup notification service when user logs out
+        notificationService.cleanup();
       }
       setLoading(false);
     });
