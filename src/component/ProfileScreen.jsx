@@ -19,6 +19,7 @@ import { ThemeContext } from './ThemeContext';
 import { useUser } from '../context/UserContext';
 import storage from '@react-native-firebase/storage';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import CourseService from '../services/CourseService';
 
 const ProfileScreen = () => {
   const { theme } = useContext(ThemeContext);
@@ -27,7 +28,8 @@ const ProfileScreen = () => {
   const [photo, setPhoto] = useState(null);
   const [name, setName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
-  const [enrolledCourses, setEnrolledCourses] = useState(['Course 1', 'Course 2']);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
   const [editingName, setEditingName] = useState(false);
   const [editingContact, setEditingContact] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -42,9 +44,55 @@ const ProfileScreen = () => {
     }
   }, [userData]);
 
+  // Load enrolled courses
+  useEffect(() => {
+    const loadEnrolledCourses = async () => {
+      if (!user) {
+        setEnrolledCourses([]);
+        setCoursesLoading(false);
+        return;
+      }
+
+      try {
+        setCoursesLoading(true);
+        const result = await CourseService.getUserCourses(user.uid);
+
+        if (result.success) {
+          // Extract course titles from the result
+          const courseTitles = result.courses.map(course => course.title).filter(Boolean);
+          setEnrolledCourses(courseTitles);
+        } else {
+          console.error('Failed to load enrolled courses:', result.error);
+          setEnrolledCourses([]);
+        }
+      } catch (error) {
+        console.error('Error loading enrolled courses:', error);
+        setEnrolledCourses([]);
+      } finally {
+        setCoursesLoading(false);
+      }
+    };
+
+    loadEnrolledCourses();
+  }, [user]);
+
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshUserData();
+
+    // Also refresh enrolled courses
+    if (user) {
+      try {
+        const result = await CourseService.getUserCourses(user.uid);
+        if (result.success) {
+          const courseTitles = result.courses.map(course => course.title).filter(Boolean);
+          setEnrolledCourses(courseTitles);
+        }
+      } catch (error) {
+        console.error('Error refreshing enrolled courses:', error);
+      }
+    }
+
     setRefreshing(false);
   };
 
@@ -447,12 +495,19 @@ const ProfileScreen = () => {
 
           <View style={styles.infoContainer}>
             <Text style={[styles.infoLabel, { color: theme.text }]}>Enrolled Courses</Text>
-            {enrolledCourses.length ? (
+            {coursesLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={theme.text} />
+                <Text style={[styles.infoValue, { color: theme.text, marginLeft: 10 }]}>Loading courses...</Text>
+              </View>
+            ) : enrolledCourses.length > 0 ? (
               enrolledCourses.map((course, idx) => (
-                <Text key={idx} style={[styles.infoValue, { color: theme.text }]}>- {course}</Text>
+                <Text key={idx} style={[styles.infoValue, { color: theme.text }]}>• {course}</Text>
               ))
             ) : (
-              <Text style={[styles.infoValue, { color: theme.text }]}>No enrolled courses yet</Text>
+              <Text style={[styles.infoValue, { color: theme.textMuted || theme.text, fontStyle: 'italic' }]}>
+                No courses enrolled yet
+              </Text>
             )}
           </View>
 
@@ -587,6 +642,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 10,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
   },
 });
 

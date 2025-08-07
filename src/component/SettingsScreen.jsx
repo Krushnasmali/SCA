@@ -1,10 +1,34 @@
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { ThemeContext } from './ThemeContext';
+import { useUser } from '../context/UserContext';
 
 export default function SettingsScreen({ navigation }) {
   const { theme, toggleTheme, isDark } = useContext(ThemeContext);
+  const { logout } = useUser();
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await logout();
+            if (result.success) {
+              // Navigation will be handled by the auth state change
+            } else {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const settingsOptions = [
     {
@@ -41,7 +65,7 @@ export default function SettingsScreen({ navigation }) {
       subtitle: 'Sign out of your account',
       icon: 'log-out-outline',
       iconColor: theme.error,
-      action: () => navigation?.navigate('LogoutScreen'),
+      action: handleLogout,
       showArrow: true,
       isDestructive: true,
     },
