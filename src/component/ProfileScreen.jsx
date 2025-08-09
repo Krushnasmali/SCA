@@ -20,11 +20,11 @@ import { useUser } from '../context/UserContext';
 import storage from '@react-native-firebase/storage';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import CourseService from '../services/CourseService';
-import notificationService from '../services/NotificationService';
+
 
 const ProfileScreen = () => {
   const { theme } = useContext(ThemeContext);
-  const { user, userData, updateProfile, refreshUserData, logout } = useUser();
+  const { user, userData, updateProfile, refreshUserData } = useUser();
 
   const [photo, setPhoto] = useState(null);
   const [name, setName] = useState('');
@@ -36,12 +36,7 @@ const ProfileScreen = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [notificationSettings, setNotificationSettings] = useState({
-    enabled: true,
-    courseUpdates: true,
-    generalAnnouncements: true
-  });
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
 
   useEffect(() => {
     if (userData) {
@@ -49,22 +44,11 @@ const ProfileScreen = () => {
       setContactNumber(userData.contactNumber || '');
       setPhoto(userData.profilePicture ? { uri: userData.profilePicture } : null);
 
-      // Load notification settings
-      if (userData.notificationSettings) {
-        setNotificationSettings(userData.notificationSettings);
-      }
+
     }
   }, [userData]);
 
-  // Load notification permission status
-  useEffect(() => {
-    const checkNotificationStatus = async () => {
-      const enabled = await notificationService.areNotificationsEnabled();
-      setNotificationsEnabled(enabled);
-    };
 
-    checkNotificationStatus();
-  }, []);
 
   // Load enrolled courses
   useEffect(() => {
@@ -331,62 +315,9 @@ const ProfileScreen = () => {
     }
   };
 
-  const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            const result = await logout();
-            if (result.success) {
-              // Navigation will be handled by the auth state change
-            } else {
-              Alert.alert('Error', 'Failed to logout');
-            }
-          }
-        }
-      ]
-    );
-  };
 
-  const handleNotificationToggle = async (settingKey, value) => {
-    const newSettings = {
-      ...notificationSettings,
-      [settingKey]: value
-    };
 
-    setNotificationSettings(newSettings);
 
-    // Update in database
-    const success = await notificationService.updateNotificationSettings(newSettings);
-    if (!success) {
-      // Revert on failure
-      setNotificationSettings(notificationSettings);
-      Alert.alert('Error', 'Failed to update notification settings');
-    }
-  };
-
-  const handleRequestNotificationPermission = async () => {
-    const hasPermission = await notificationService.requestPermission();
-    setNotificationsEnabled(hasPermission);
-
-    if (hasPermission) {
-      Alert.alert('Success', 'Notifications enabled successfully!');
-    } else {
-      Alert.alert(
-        'Permission Required',
-        'Please enable notifications in your device settings to receive important updates.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Settings', onPress: () => Linking.openSettings() }
-        ]
-      );
-    }
-  };
 
   return (
     <ScrollView
@@ -568,153 +499,9 @@ const ProfileScreen = () => {
             )}
           </View>
 
-          {/* Notification Settings */}
-          <View style={styles.infoContainer}>
-            <Text style={[styles.infoLabel, { color: theme.text }]}>Notification Settings</Text>
 
-            {!notificationsEnabled ? (
-              <View style={[
-                styles.valueContainer,
-                {
-                  backgroundColor: theme.cardBackground,
-                  borderColor: theme.border,
-                }
-              ]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.infoValue, { color: theme.text, marginBottom: 4 }]}>
-                    Notifications Disabled
-                  </Text>
-                  <Text style={[styles.infoValue, { color: theme.textMuted, fontSize: 12 }]}>
-                    Enable notifications to receive course updates
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.enableButton, { backgroundColor: theme.primary }]}
-                  onPress={handleRequestNotificationPermission}
-                >
-                  <Text style={styles.enableButtonText}>Enable</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View>
-                {/* General Notifications Toggle */}
-                <View style={[
-                  styles.settingRow,
-                  {
-                    backgroundColor: theme.cardBackground,
-                    borderColor: theme.border,
-                  }
-                ]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.settingTitle, { color: theme.text }]}>
-                      Push Notifications
-                    </Text>
-                    <Text style={[styles.settingDescription, { color: theme.textMuted }]}>
-                      Receive notifications on this device
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    style={[
-                      styles.toggle,
-                      {
-                        backgroundColor: notificationSettings.enabled ? theme.primary : theme.border
-                      }
-                    ]}
-                    onPress={() => handleNotificationToggle('enabled', !notificationSettings.enabled)}
-                  >
-                    <View style={[
-                      styles.toggleThumb,
-                      {
-                        backgroundColor: '#fff',
-                        transform: [{ translateX: notificationSettings.enabled ? 20 : 2 }]
-                      }
-                    ]} />
-                  </TouchableOpacity>
-                </View>
 
-                {/* Course Updates Toggle */}
-                <View style={[
-                  styles.settingRow,
-                  {
-                    backgroundColor: theme.cardBackground,
-                    borderColor: theme.border,
-                    opacity: notificationSettings.enabled ? 1 : 0.5
-                  }
-                ]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.settingTitle, { color: theme.text }]}>
-                      Course Updates
-                    </Text>
-                    <Text style={[styles.settingDescription, { color: theme.textMuted }]}>
-                      New course assignments and updates
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    style={[
-                      styles.toggle,
-                      {
-                        backgroundColor: (notificationSettings.enabled && notificationSettings.courseUpdates) ?
-                          theme.primary : theme.border
-                      }
-                    ]}
-                    onPress={() => handleNotificationToggle('courseUpdates', !notificationSettings.courseUpdates)}
-                    disabled={!notificationSettings.enabled}
-                  >
-                    <View style={[
-                      styles.toggleThumb,
-                      {
-                        backgroundColor: '#fff',
-                        transform: [{ translateX: (notificationSettings.enabled && notificationSettings.courseUpdates) ? 20 : 2 }]
-                      }
-                    ]} />
-                  </TouchableOpacity>
-                </View>
 
-                {/* General Announcements Toggle */}
-                <View style={[
-                  styles.settingRow,
-                  {
-                    backgroundColor: theme.cardBackground,
-                    borderColor: theme.border,
-                    opacity: notificationSettings.enabled ? 1 : 0.5
-                  }
-                ]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.settingTitle, { color: theme.text }]}>
-                      General Announcements
-                    </Text>
-                    <Text style={[styles.settingDescription, { color: theme.textMuted }]}>
-                      Academy news and announcements
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    style={[
-                      styles.toggle,
-                      {
-                        backgroundColor: (notificationSettings.enabled && notificationSettings.generalAnnouncements) ?
-                          theme.primary : theme.border
-                      }
-                    ]}
-                    onPress={() => handleNotificationToggle('generalAnnouncements', !notificationSettings.generalAnnouncements)}
-                    disabled={!notificationSettings.enabled}
-                  >
-                    <View style={[
-                      styles.toggleThumb,
-                      {
-                        backgroundColor: '#fff',
-                        transform: [{ translateX: (notificationSettings.enabled && notificationSettings.generalAnnouncements) ? 20 : 2 }]
-                      }
-                    ]} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
-
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <FontAwesome6 name="sign-out-alt" size={20} color="#fff" />
-            <Text style={styles.logoutButtonText}>Logout</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -821,73 +608,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#dc3545',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 30,
-    marginBottom: 20,
-    shadowColor: '#dc3545',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
+
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 5,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  settingDescription: {
-    fontSize: 12,
-    opacity: 0.7,
-  },
-  toggle: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  toggleThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    position: 'absolute',
-  },
-  enableButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  enableButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
 

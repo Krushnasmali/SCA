@@ -1,12 +1,32 @@
-import React, { useContext } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useContext, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Alert, Linking } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { ThemeContext } from './ThemeContext';
 import { useUser } from '../context/UserContext';
+import notificationService from '../services/NotificationService';
 
 export default function SettingsScreen({ navigation }) {
   const { theme, toggleTheme, isDark } = useContext(ThemeContext);
-  const { logout } = useUser();
+  const { logout, userData } = useUser();
+  
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(true);
+
+  useEffect(() => {
+    if (userData?.notificationSettings) {
+      setPushNotificationsEnabled(userData.notificationSettings.enabled || true);
+    }
+  }, [userData]);
+
+  // Load notification permission status
+  useEffect(() => {
+    const checkNotificationStatus = async () => {
+      const enabled = await notificationService.areNotificationsEnabled();
+      setNotificationsEnabled(enabled);
+    };
+
+    checkNotificationStatus();
+  }, []);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -28,6 +48,42 @@ export default function SettingsScreen({ navigation }) {
         }
       ]
     );
+  };
+
+  const handleNotificationToggle = async (value) => {
+    const newSettings = {
+      enabled: value,
+      courseUpdates: value,
+      generalAnnouncements: value
+    };
+
+    setPushNotificationsEnabled(value);
+
+    // Update in database
+    const success = await notificationService.updateNotificationSettings(newSettings);
+    if (!success) {
+      // Revert on failure
+      setPushNotificationsEnabled(!value);
+      Alert.alert('Error', 'Failed to update notification settings');
+    }
+  };
+
+  const handleRequestNotificationPermission = async () => {
+    const hasPermission = await notificationService.requestPermission();
+    setNotificationsEnabled(hasPermission);
+
+    if (hasPermission) {
+      Alert.alert('Success', 'Notifications enabled successfully!');
+    } else {
+      Alert.alert(
+        'Permission Required',
+        'Please enable notifications in your device settings to receive important updates.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Settings', onPress: () => Linking.openSettings() }
+        ]
+      );
+    }
   };
 
   const settingsOptions = [
@@ -70,6 +126,80 @@ export default function SettingsScreen({ navigation }) {
       isDestructive: true,
     },
   ];
+
+  const renderNotificationSettings = () => {
+    return (
+      <View style={styles.notificationSection}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          Notifications
+        </Text>
+
+        {!notificationsEnabled ? (
+          <View style={[
+            styles.settingCard,
+            {
+              backgroundColor: theme.cardBackground,
+              borderColor: theme.cardBorder,
+              shadowColor: theme.cardShadow,
+            }
+          ]}>
+            <View style={styles.settingContent}>
+              <View style={[styles.iconContainer, { backgroundColor: `${theme.primary}15` }]}>
+                <Icon name="notifications-off-outline" size={24} color={theme.primary} />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={[styles.settingTitle, { color: theme.text }]}>
+                  Notifications Disabled
+                </Text>
+                <Text style={[styles.settingSubtitle, { color: theme.textSecondary }]}>
+                  Enable notifications to receive course updates
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.enableButton, { backgroundColor: theme.primary }]}
+                onPress={handleRequestNotificationPermission}
+              >
+                <Text style={styles.enableButtonText}>Enable</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={[
+            styles.settingCard,
+            {
+              backgroundColor: theme.cardBackground,
+              borderColor: theme.cardBorder,
+              shadowColor: theme.cardShadow,
+            }
+          ]}>
+            <View style={styles.settingContent}>
+              <View style={[styles.iconContainer, { backgroundColor: `${theme.primary}15` }]}>
+                <Icon name="notifications-outline" size={24} color={theme.primary} />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={[styles.settingTitle, { color: theme.text }]}>
+                  Push Notifications
+                </Text>
+                <Text style={[styles.settingSubtitle, { color: theme.textSecondary }]}>
+                  Receive course updates and announcements
+                </Text>
+              </View>
+              <Switch
+                value={pushNotificationsEnabled}
+                onValueChange={handleNotificationToggle}
+                thumbColor={pushNotificationsEnabled ? theme.switchThumb : theme.textMuted}
+                trackColor={{
+                  false: theme.switchTrack,
+                  true: theme.switchTrackActive,
+                }}
+                ios_backgroundColor={theme.switchTrack}
+              />
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   const renderSettingItem = (item) => {
     const ItemComponent = item.hasSwitch ? View : TouchableOpacity;
@@ -145,6 +275,8 @@ export default function SettingsScreen({ navigation }) {
             Manage your app preferences
           </Text>
         </View>
+
+        {renderNotificationSettings()}
 
         <View style={styles.settingsContainer}>
           {settingsOptions.map(renderSettingItem)}
@@ -228,5 +360,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 24,
+  },
+  notificationSection: {
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  enableButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  enableButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

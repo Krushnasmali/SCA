@@ -21,6 +21,10 @@
     "notifications": {
       ".read": "auth.token.admin === true",
       ".write": "auth.token.admin === true"
+    },
+    "certificates": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }

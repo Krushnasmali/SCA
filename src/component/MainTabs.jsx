@@ -46,10 +46,16 @@ export default function MainTabs({ route }) {
         tabBarInactiveTintColor: theme.tabBarInactive,
         tabBarIcon: ({ focused }) => {
           let iconName = 'home';
-          if (tabRoute.name === 'Settings') iconName = 'setting';
-          else if (tabRoute.name === 'Profile') iconName = 'user';
+          let IconComponent = AntDesign;
+
+          if (tabRoute.name === 'Settings') {
+            iconName = 'setting';
+          } else if (tabRoute.name === 'Profile') {
+            iconName = 'user';
+          }
+
           return (
-            <AntDesign
+            <IconComponent
               name={iconName}
               size={24}
               color={focused ? theme.tabBarActive : theme.tabBarInactive}

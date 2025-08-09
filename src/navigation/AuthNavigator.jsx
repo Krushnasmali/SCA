@@ -11,7 +11,9 @@ import MainTabs from '../component/MainTabs';
 import AllCoursesScreen from '../component/AllCoursesScreen';
 import MyCoursesScreen from '../component/MyCoursesScreen';
 import CourseDetailsScreen from '../component/CourseDetailsScreen';
+import CertificatesScreen from '../component/CertificatesScreen';
 import ProfileScreen from '../component/ProfileScreen';
+import { themes } from '../component/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +37,7 @@ const AuthNavigator = () => {
           <Stack.Screen name="AllCourses" component={AllCoursesScreen} />
           <Stack.Screen name="MyCourses" component={MyCoursesScreen} />
           <Stack.Screen name="CourseDetails" component={CourseDetailsScreen} />
+          <Stack.Screen name="Certificates" component={CertificatesScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
         </>
       ) : (
